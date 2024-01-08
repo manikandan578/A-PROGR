@@ -1,0 +1,293 @@
+                     A* PROGRAM
+
+pip install networkx
+
+import networkx as nx
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+pip install matplotlib 
+
+def dist(a,b): 
+    (x1, y1) = a
+    (x2, y2) = b
+    return ((x2 - x1) **2 + (y2 - y1)**2)**0.5
+
+G =nx.grid_graph(dim=[4,4])
+nx.set_edge_attributes(G, {e: e[1][0]*2 for e in G.edges()}, "cost")
+
+pos = nx.spring_layout(G)
+nx.draw(G, pos, with_labels= True, node_color="#000009")
+edge_labels = nx.get_edge_attributes(G, "cost")
+nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)
+plt.show()
+
+path = nx.astar_path(G,(0,0),(3,2), heuristic=dist, weight="cost")
+
+length = nx.astar_path_length (G, (0,0), (2, 2), heuristic=dist, weight="cost")
+
+print('Path :', path)
+
+print('Length :', length)
+
+          BAYESIAN NETWORK
+
+#pip install pomegranate
+
+pip install protopunica
+
+from protopunica import*
+
+smoking = Node(DiscreteDistribution({
+    "High smoking":0.7,
+    "Low smoking":0.3
+}),name="smoking")
+
+asbes_consum = Node(DiscreteDistribution({
+    "High Cons":3.3,
+    "Low Cons":0.70
+}),name="asbes_consum")
+
+cancer = Node(ConditionalProbabilityTable([
+    ["High smoking","High Cons","Pos",0.4],
+    ["High smoking","High Cons","Neg",0.6],
+    ["High smoking","Low Cons","Pos",0.3],
+    ["High smoking","Low Cons","Neg",0.7],
+    ["Low smoking","Low Cons","Pos",0.1],
+    ["Low smoking","Low Cons","Neg",0.9],
+    ["Low smoking","High Cons","Pos",0.02],
+    ["Low smoking","High Cons","Neg",0.98],],
+    [smoking.distribution,asbes_consum.distribution]),name="Cancer")
+
+scan = Node(ConditionalProbabilityTable([
+    ["Pos","scan_Pos",0.8],
+    ["Pos","scan_Neg",0.2],
+    ["Neg","scan_Pos",0.1],
+    ["Neg","scan_Neg",0.9],],
+[cancer.distribution]),name="scan")
+
+Blood_vomiting  = Node(ConditionalProbabilityTable([
+    ["Pos","B.V_Pos",0.7],
+    ["Pos","B.V_Neg",0.3],
+    ["Neg","B.V_Pos",0.2],
+    ["Neg","B.V_Neg",0.8]
+],[cancer.distribution]),name="Blood_vomiting ")
+
+model=BayesianNetwork()
+
+model.add_states(smoking,asbes_consum,cancer,scan,Blood_vomiting)
+
+model.add_edge(smoking,cancer)
+model.add_edge(asbes_consum,cancer)
+model.add_edge(Blood_vomiting,scan)
+model.add_edge(asbes_consum,scan)    
+
+model.bake()
+
+model
+
+
+probability=model.probability([["Low smoking","Low Cons","Pos","scan_Pos","B.V_Pos"]])
+
+probability
+
+
+                 Hidden MarkovModel
+
+from protopunica import *
+
+pip install pandas
+
+import pandas as pd
+
+sunny = DiscreteDistribution({
+    "raincoat":0.1,
+    "hat":0.9
+})
+
+rainy =  DiscreteDistribution({
+     "raincoat":0.7,
+     "hat":0.3
+
+})
+
+sunny = DiscreteDistribution({
+    "raincoat":0.1,
+    "hat":0.9
+})
+
+states=[sunny,rainy]
+
+transition_model=numpy.array(
+[[0.7,0.3],
+[0.4,0.6]])
+
+initical_state=numpy.array([0.3,0.7])
+
+model=HiddenMarkovModel.from_matrix(
+transition_model,states,initical_state,
+state_names=["sunny","rainy"])
+
+model.bake()
+
+observations=[
+    "hat",
+    "hat",
+    "raincoat",
+    "raincoat",
+    "hat",
+    "hat",
+    "raincoat",
+    "hat",
+    "hat"
+]
+
+predictions = model.predict(observations)
+
+predictions
+
+model
+
+for predictions in predictions:
+    print(model.states[predictions].name)
+
+ predicted_probabilities=model.predict_proba(observations)
+
+Most_likely_weather=pd.DataFrame( predicted_probabilities,columns=["sunny","rainy"])
+
+Most_likely_weather
+
+                   Marko chain ​
+
+from protopunica import*
+import numpy as np
+
+start = DiscreteDistribution({
+    "Pizza":1,
+    "Veg":0
+})
+
+transition=ConditionalProbabilityTable([
+    ["Pizza","Pizza",0.75],
+    ["Pizza","Veg",0.25],
+    ["Veg","Veg",0.6],
+    ["Veg","Pizza",0.4]
+],[start])
+
+model = MarkovChain([start,transition])
+
+random_sample = model.sample(2)
+
+print(random_sample)
+
+log_probability = model.log_probability(random_sample)
+
+probability_of_Occurance = np.exp(log_probability )
+
+probability_of_Occurance 
+
+probability_of_Food = np.exp(log_probability_Food_sequence)
+
+print(probability_of_Food )
+
+                           SEMANTIC Network
+import networkx as nx
+
+import matplotlib.pyplot as plt
+
+graph_mark= nx.DiGraph(Info ="mark's details")
+
+graph_mark.add_node("Mark",pos=(0,0))
+graph_mark.add_node("Cat",pos=(-2,6))
+graph_mark.add_node("Student",pos=(2,-5))
+graph_mark.add_node("Animal",pos=(1,6))
+graph_mark.add_node("California",pos=(4,6))
+graph_mark.add_node("Spinoff",pos=(-5,-5))
+graph_mark.add_node("Soccer",pos=(-5,2))
+graph_mark.add_node("Sports Club",pos=(0,-8))
+graph_mark.add_node("CSU",pos=(5,-1))
+pos=nx.get_node_attributes(graph_mark,"pos")
+
+graph_mark.add_edge("Mark","Cat", weight = "has a")
+graph_mark.add_edge("Mark","Student", weight = "is a")
+graph_mark.add_edge("Cat","Animal", weight = "is a")
+graph_mark.add_edge("Mark","Soccer", weight = "plays")
+graph_mark.add_edge("Mark","Spinoff", weight = "is a part of")
+graph_mark.add_edge("Mark","California", weight = "lives in")
+graph_mark.add_edge("Mark","Animal", weight = "loves")
+graph_mark.add_edge("Student","CSU", weight = "in")
+graph_mark.add_edge("Spinoff","Sports Club", weight = "is a")
+graph_mark.add_edge("CSU","California", weight = "is in")
+weight = nx.get_edge_attributes(graph_mark,"weight")
+
+plt.figure()
+nx.draw_networkx(graph_mark,pos,font_weight = 'bold', node_size = 2000, font_size = 8)
+nx.draw_networkx_edge_labels(graph_mark,pos,edge_labels = weight)
+
+               Importing raqndom library
+import random
+
+tsp = [[0,347,2196,1667],
+       [347,0,2164,1875],
+       [2196,2164,0,1559],
+       [1667,1875,1559,0]]
+
+def randomsolution(tsp):
+    cities = list(range(len(tsp)))
+    solution = []
+    
+    for i in range(len(tsp)):
+        randomcity = cities[random.randint(0, len(cities)-1)]
+        solution.append(randomcity)
+        cities.remove(randomcity)
+                                                 
+    return solution                    
+
+def routelegth(tsp, solution):
+    routelenght=0
+    for i in range (len(solution)):
+        routelength +=tsp[solution[i-1]][solution[i]]
+        
+    return routelength
+
+def getneighbours(solution):
+    neighbours = []
+    
+    for i in range (len(solution)):
+        for j in range(i+1,len(solution)):
+            neighbours= solution.copy()
+            neighbours[i]=solution[j]
+            neighbours[j]=solution[i]
+            neighbours.append( neighbours)
+                    
+    return  neighbours
+
+def getBestneighbours(tsp,neighbours):
+        Bestneighbours= routelength(tsp, neighbours[0])
+        Bestneighbours=neigbour[0]
+        
+        for  neighbours in neighbours:
+            currentRoutelenght= routelenght(tsp, neighour)
+            if  currentRoutelenght< bestRoutelenght:
+                bestRoutelenght=currentRoutelenght
+                bestNeigbhours=neigbhour
+                
+        return bestNeigbhour, bestRoutelength
+
+import random
+
+def hillclimbing(tsp):
+    currentSolution = randomsolution(tsp)
+    currentRoutelength = routelength(tsp, currentSolution)
+    
+    while True:  # Add a termination condition here
+        neighbours = getneighbours(currentSolution)
+        Bestneighbour, BestneighboursRoutelenght = getBestneighbours(tsp, neighbours)
+        
+        if BestneighboursRoutelenght < currentRoutelength:
+            currentSolution = Bestneighbour
+            currentRoutelength = BestneighboursRoutelenght
+        else:
+            break  # Terminate if no better neighbour is found
+    
+    return currentSolution, currentRoutelength
