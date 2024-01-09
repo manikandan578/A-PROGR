@@ -291,3 +291,42 @@ def hillclimbing(tsp):
             break  # Terminate if no better neighbour is found
     
     return currentSolution, currentRoutelength
+
+                 Markov chain
+
+from protopunica import*
+
+import numpy as np
+
+start = DiscreteDistribution({
+    "Pizza":1,
+    "Veg":0
+})
+
+transition=ConditionalProbabilityTable([
+    ["Pizza","Pizza",0.75],
+    ["Pizza","Veg",0.25],
+    ["Veg","Veg",0.6],
+    ["Veg","Pizza",0.4]
+],[start])
+
+model=MarkovChain([start,transition])
+
+random_sample = model.sample(2)
+
+print(random_sample)
+
+log_probability = model.log_probability(random_sample)
+
+probability_of_Occurance = np.exp(log_probability )
+
+probability_of_Occurance 
+
+log_probability_food_sequence=model.log_probability(["Pizza","Veg",])
+
+probability_of_food = np.exp(log_probability_food_sequence)
+
+print(probability_of_food ) 
+
+
+
